@@ -5,30 +5,38 @@ import RichEditor from '@/components/RichEditor'
 
 const inp = { border: '1.5px solid #e9edef', borderRadius: 10, padding: '9px 12px', fontSize: 14, width: '100%', outline: 'none', fontFamily: "'DM Sans',sans-serif" } as React.CSSProperties
 
-// Strip HTML tags to get plain text for the chatbot engine
-function htmlToPlain(html: string): string {
-  if (typeof document === 'undefined') return html
-  const div = document.createElement('div')
-  div.innerHTML = html
-  return div.textContent || div.innerText || ''
+// Convert plain text with \n to HTML for the editor
+function toHtml(text: string): string {
+  if (!text) return ''
+  // Already HTML — don't double-convert
+  if (/<[a-z][\s\S]*>/i.test(text)) return text
+  // Plain text → HTML: escape, then convert \n to <br>
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .split('\n')
+    .map(line => `<p>${line || '<br>'}</p>`)
+    .join('')
 }
 
-// Render HTML preview of a response
-function ResponsePreview({ html }: { html: string }) {
-  const isHtml = /<[a-z][\s\S]*>/i.test(html)
-  if (!isHtml) {
-    return <div style={{ whiteSpace: 'pre-wrap', fontSize: 13, color: '#111b21', lineHeight: 1.6 }}>{html}</div>
-  }
+// Render response — always treat \n as line break even for plain text
+function ResponsePreview({ value }: { value: string }) {
+  const html = toHtml(value)
   return (
     <div
-      style={{ fontSize: 13, color: '#111b21', lineHeight: 1.6 }}
+      style={{ fontSize: 13, color: '#111b21', lineHeight: 1.65 }}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   )
 }
 
 function Modal({ scenario, onClose }: { scenario: any; onClose: () => void }) {
-  const [form, setForm] = useState(scenario || { trigger: '', response: '', next_step: '' })
+  // Convert existing plain text to HTML when opening the editor
+  const [form, setForm] = useState(() => {
+    const s = scenario || { trigger: '', response: '', next_step: '' }
+    return { ...s, response: toHtml(s.response) }
+  })
   const [previewMode, setPreviewMode] = useState(false)
 
   const save = async () => {
@@ -57,7 +65,6 @@ function Modal({ scenario, onClose }: { scenario: any; onClose: () => void }) {
               placeholder="Mot-clé envoyé par l'utilisateur (ex: 1, oui, informatique...)"
               style={inp}
             />
-            <p style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>Ce mot-clé déclenche la réponse ci-dessous.</p>
           </div>
 
           {/* Response with rich editor */}
@@ -67,18 +74,12 @@ function Modal({ scenario, onClose }: { scenario: any; onClose: () => void }) {
                 💬 Réponse du chatbot
               </label>
               <div style={{ display: 'flex', gap: 6 }}>
-                <button
-                  type="button"
-                  onClick={() => setPreviewMode(false)}
-                  style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: !previewMode ? '#075E54' : '#f0f2f5', color: !previewMode ? '#fff' : '#667781' }}
-                >
+                <button type="button" onClick={() => setPreviewMode(false)}
+                  style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: !previewMode ? '#075E54' : '#f0f2f5', color: !previewMode ? '#fff' : '#667781' }}>
                   ✏️ Éditer
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setPreviewMode(true)}
-                  style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: previewMode ? '#075E54' : '#f0f2f5', color: previewMode ? '#fff' : '#667781' }}
-                >
+                <button type="button" onClick={() => setPreviewMode(true)}
+                  style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: previewMode ? '#075E54' : '#f0f2f5', color: previewMode ? '#fff' : '#667781' }}>
                   👁️ Aperçu
                 </button>
               </div>
@@ -92,10 +93,9 @@ function Modal({ scenario, onClose }: { scenario: any; onClose: () => void }) {
                 minHeight={180}
               />
             ) : (
-              /* WhatsApp-style preview */
               <div style={{ background: '#ECE5DD', borderRadius: 12, padding: 12, minHeight: 120 }}>
                 <div style={{ maxWidth: '85%', background: '#fff', borderRadius: '0 12px 12px 12px', padding: '10px 13px 8px', boxShadow: '0 1px 2px rgba(0,0,0,.12)' }}>
-                  <ResponsePreview html={form.response} />
+                  <ResponsePreview value={form.response} />
                   <div style={{ fontSize: 10, color: '#667781', textAlign: 'right', marginTop: 4 }}>maintenant ✓✓</div>
                 </div>
               </div>
@@ -178,9 +178,9 @@ export default function PageScenarios() {
                 )}
               </div>
 
-              {/* Response preview — WhatsApp bubble style */}
+              {/* Response preview — always renders correctly */}
               <div style={{ background: '#f7f8fa', borderRadius: 10, padding: '10px 14px' }}>
-                <ResponsePreview html={s.response} />
+                <ResponsePreview value={s.response} />
               </div>
             </div>
 
