@@ -20,9 +20,10 @@ body {
   font-family: 'DM Sans', sans-serif;
   background: #f0f2f5;
   color: #111b21;
+  -webkit-tap-highlight-color: transparent;
 }
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
 
@@ -55,7 +56,7 @@ body {
 
 .chart-bar {
   border-radius: 4px 4px 0 0;
-  min-width: 20px;
+  min-width: 8px;
   transition: height .5s cubic-bezier(.34,1.56,.64,1);
 }
 
@@ -64,3 +65,80 @@ body {
   to { opacity: 1; transform: none; }
 }
 .slide-in { animation: slideIn .3s ease; }
+
+/* ── Responsive table ── */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ── Bottom nav mobile ── */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: #fff;
+  border-top: 1px solid #e9edef;
+  z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 1000;
+  display: flex; align-items: flex-end;
+  backdrop-filter: blur(3px);
+}
+.modal {
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px;
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 640px) {
+  .modal-overlay { align-items: center; }
+  .modal {
+    border-radius: 20px;
+    width: min(500px, 95vw);
+    margin: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Show bottom nav, hide sidebar */
+  .bottom-nav { display: flex; }
+  .desktop-sidebar { display: none !important; }
+  .admin-main { padding-bottom: 70px !important; }
+  .admin-topbar { position: sticky; top: 0; z-index: 40; }
+
+  /* Simulator full screen on mobile */
+  .sim-wrapper {
+    padding: 0 !important;
+    background: #e5ddd5 !important;
+    min-height: calc(100vh - 48px) !important;
+    align-items: stretch !important;
+  }
+  .sim-intro { display: none !important; }
+  .sim-phone {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    height: calc(100vh - 48px) !important;
+    max-height: none !important;
+  }
+
+  /* Stats grid 2 cols on mobile */
+  .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Charts stack */
+  .charts-grid { grid-template-columns: 1fr !important; }
+
+  /* Formations grid 1 col */
+  .formations-grid { grid-template-columns: 1fr !important; }
+
+  /* Conversation split view hidden on mobile by default */
+  .conv-grid { grid-template-columns: 1fr !important; }
+  .conv-detail-panel { display: none; }
+  .conv-detail-panel.open { display: flex !important; position: fixed; inset: 0; z-index: 100; background: #fff; flex-direction: column; }
+}
